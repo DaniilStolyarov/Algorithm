@@ -1,40 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 class CryptoUtils
-{
-    public static int pow(int a, int n)
-    {
-        int res = 1;
-        for (int i = 0; i < n; i++)
-        {
-            res *= a;
-        }
-        return res;
-    }
-    public static int modexp(int x, int y, int N)
+{   
+    
+    public static BigInteger modexp(BigInteger x, BigInteger y, BigInteger N)
     {
         if (y == 0) return 1;
-        int z = modexp(x, y / 2, N);
+        BigInteger z = modexp(x, y / 2, N);
         if (y % 2 == 0)
             return (z * z) % N;
         else
             return ((x % N) * ((z * z) % N)) % N;
     }
-    public static int gcd(int a, int b)
+    public static BigInteger gcd(BigInteger a, BigInteger b)
     {
         if (b == 0) return a;
         else return gcd(b, a % b);
     }
-    static long jakobi(long a, long n)
+    static BigInteger jakobi(BigInteger a, BigInteger n)
     {
         if (n <= 0 || n % 2 == 0)
             return 0;
 
-        long ans = 1L;
+        BigInteger ans = 1L;
 
         if (a < 0)
         {
@@ -62,7 +56,7 @@ class CryptoUtils
                     ans = -ans;
             }
 
-            long temp = a;
+            BigInteger temp = a;
             a = n;
             n = temp;
 
@@ -84,19 +78,21 @@ class CryptoUtils
     /// </summary>
     /// <param name="number"></param>
     /// <returns></returns>
-    public static bool Solovey_ShtrassenTest(int number)
+    public static bool Solovey_ShtrassenTest(BigInteger number)
     {
         if (number <= 2) return false;
         if (number % 2 == 0) return false;
-        for (int k = 0; k < 10; k++)
+        for (BigInteger k = 0; k < 10; k++)
         {
-            int a = Random.Shared.Next(2, number);
+            var rng = RandomNumberGenerator.Create();
+            BigInteger a = BigIntegerUtils.RandomInRange(rng, 2, number - 1);
+            
             if (gcd(a, number) > 1)
             {
                 return false;
             }
-            int mod = modexp(a, (number - 1) / 2, number);
-            int jak = (int)(number + jakobi(a, number)) % number;
+            BigInteger mod = modexp(a, (number - 1) / 2, number);
+            BigInteger jak = (BigInteger)(number + jakobi(a, number)) % number;
             if (mod != jak)
             {
                 return false;
@@ -105,26 +101,28 @@ class CryptoUtils
 
         return true;
     }
-    public static bool FermaTest(int number)
+    public static bool FermaTest(BigInteger number)
     {
         if (number <= 2) return false;
         if (number % 2 == 0) return false;
-        for (int k = 0; k < 10; k++)
+        for (BigInteger k = 0; k < 10; k++)
         {
-            int a = Random.Shared.Next(2, number);
+            var rng = RandomNumberGenerator.Create();
+            BigInteger a = BigIntegerUtils.RandomInRange(rng, 2, number - 1);
             if (modexp(a, number - 1, number) != 1) return false;
         }
 
         return true;
     }
-    public static bool LemanTest(int number)
+    public static bool LemanTest(BigInteger number)
     {
         if (number <= 2) return false;
         if (number % 2 == 0) return false;
-        for (int k = 0; k < 10; k++)
+        for (BigInteger k = 0; k < 10; k++)
         {
-            int a = Random.Shared.Next(2, number);
-            int x = modexp(a, (number - 1) / 2, number);
+            var rng = RandomNumberGenerator.Create();
+            BigInteger a = BigIntegerUtils.RandomInRange(rng, 2, number - 1);
+            BigInteger x = modexp(a, (number - 1) / 2, number);
             if (x != 1 && x != -1 && x != (number - 1)) return false;
         }
 
@@ -132,13 +130,13 @@ class CryptoUtils
     }
     public struct S_D
     {
-        public int s;
-        public int d;
+        public BigInteger s;
+        public BigInteger d;
     }
-    public static S_D getS_D(int number)
+    public static S_D getS_D(BigInteger number)
     {
-        int S = 0;
-        int D = number;
+        BigInteger S = 0;
+        BigInteger D = number;
         while (D % 2 == 0)
         {
             D /= 2;
@@ -151,19 +149,20 @@ class CryptoUtils
     /// </summary>
     /// <param name="number"></param>
     /// <returns></returns>
-    public static bool RabinTest(int number)
+    public static bool RabinTest(BigInteger number)
     {
         if (number <= 2) return false;
         if (number % 2 == 0) return false;
         var SD = getS_D(number);
-        int s = SD.s; int d = SD.d;
+        BigInteger s = SD.s; BigInteger d = SD.d;
 
-        for (int k = 0; k < 10; k++)
+        for (BigInteger k = 0; k < 10; k++)
         {
-            int a = Random.Shared.Next(2, number);
-            int x = modexp(a, (number - 1) / 2, number);
+            var rng = RandomNumberGenerator.Create();
+            BigInteger a = BigIntegerUtils.RandomInRange(rng, 2, number - 1);
+            BigInteger x = modexp(a, (number - 1) / 2, number);
             if (x == 1 || x == -1 || x == (number - 1)) continue;
-            for (int i = 0; i < s - 1; i++)
+            for (BigInteger i = 0; i < s - 1; i++)
             {
                 x = modexp(x, 2, number);
                 if (x == number - 1) continue;
@@ -174,7 +173,7 @@ class CryptoUtils
         return true;
     }
 
-    public static bool AllTest(int number)
+    public static bool AllTest(BigInteger number)
     {
         return FermaTest(number) && LemanTest(number) && RabinTest(number) && Solovey_ShtrassenTest(number);
     }
